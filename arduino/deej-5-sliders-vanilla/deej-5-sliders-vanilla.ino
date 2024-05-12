@@ -2,7 +2,10 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
+#include <Fonts/FreeSerif9pt7b.h>
+
 #include "images.h"
+
 
 // OLED
 #define SCREEN_WIDTH 128
@@ -13,14 +16,14 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 // OLED
 
-const int NUM_SLIDERS = 2;
-const int analogInputs[NUM_SLIDERS] = { A1, A0 };
-const String names[] = { "Master", "Chrome" };
+const int NUM_SLIDERS = 4;
+const int analogInputs[NUM_SLIDERS] = { A0, A1, A2, A3 };
+const String names[] = { "1. Master", "2. Chrome", "3. Input", "4. UCA222" };
 
 int analogSliderValues[NUM_SLIDERS];
 
 // Definição do tamanho da janela para a média móvel
-const int windowSize = 15;
+const int windowSize = 10;
 
 // Arrays para armazenar as últimas leituras de cada potenciômetro
 int readings[NUM_SLIDERS][windowSize];
@@ -30,7 +33,7 @@ int total[NUM_SLIDERS] = { 0 };
 // Controls
 
 uint8_t DELAY = 10;
-const unsigned long milisecsToTriggerScreenSaver = 20ul * 1000ul;
+const unsigned long milisecsToTriggerScreenSaver = 15ul * 1000ul;
 unsigned long lastInteractionTimestamp = millis();
 
 bool screenSaveActive = false;
@@ -49,12 +52,28 @@ void setup() {
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
 
   // Prints the Adafruit logo
+  display.setContrast(1);
   display.display();
-  display.setRotation(3);
+  // display.setRotation(3);
   display.setTextColor(WHITE);
   delay(250);
-  // display.setRotation(2);
+  
 }
+
+/**
+Modify this to add contrast support (kinda of...):
+
+Adafruit_SSD1306.h
+void setContrast(uint8_t contrast);
+
+Adafruit_SSD1306.cpp
+void Adafruit_SSD1306::setContrast(uint8_t contrast) {
+  TRANSACTION_START
+  ssd1306_command1(SSD1306_SETCONTRAST);
+  ssd1306_command1(contrast);
+  TRANSACTION_END
+}
+*/
 
 void loop() {
   updateSliderValues();
@@ -107,31 +126,47 @@ Text Size 2 = 16 height
 */
 void printValuesToDisplay() {
 
-  uint8_t lineX = 3;
-  uint8_t lineY[] = { 3, 16, 28, 44, 54 };
+  uint8_t lineX[] =  {3, 67 };
+  uint8_t lineY[] = { 3, 16, 35, 45 };
 
   display.clearDisplay();
-  display.drawRect(0, 0, 64, 128, WHITE);
-  display.drawLine(0, 12, 64, 12, WHITE);
-  display.setCursor(13, lineY[0]);
+  display.drawRect(0, 0, 128, 64, WHITE);
+  display.drawLine(0, 32, 128, 32, WHITE);
+  display.drawLine(64, 0, 64, 64, WHITE);
+  // display.setCursor(13, lineY[0]);
 
-  display.setTextSize(1);
-  display.println("Values");
-  display.println("");
+  // display.setTextSize(1);
+  // display.println("Volume");
+  // display.println("");
 
-  display.setCursor(lineX, lineY[1]);
+  display.setCursor(lineX[0], lineY[0]);
   display.setTextSize(1);
   display.println(names[0]);
-  display.setCursor(lineX, lineY[2]);
+  display.setCursor(lineX[0], lineY[1]);
   display.setTextSize(2);
   display.println(String((int)calculateMovingAverage(0, analogSliderValues[0]) / 10));
 
-  display.setCursor(lineX, lineY[3]);
+  display.setCursor(lineX[0], lineY[2]);
   display.setTextSize(1);
   display.println(names[1]);
-  display.setCursor(lineX, lineY[4]);
+  display.setCursor(lineX[0], lineY[3]);
   display.setTextSize(2);
   display.println(String((int)calculateMovingAverage(1, analogSliderValues[1]) / 10));
+
+
+   display.setCursor(lineX[1], lineY[0]);
+  display.setTextSize(1);
+  display.println(names[2]);
+  display.setCursor(lineX[1], lineY[1]);
+  display.setTextSize(2);
+  display.println(String((int)calculateMovingAverage(2, analogSliderValues[2]) / 10));
+
+  display.setCursor(lineX[1], lineY[2]);
+  display.setTextSize(1);
+  display.println(names[3]);
+  display.setCursor(lineX[1], lineY[3]);
+  display.setTextSize(2);
+  display.println(String((int)calculateMovingAverage(3, analogSliderValues[3]) / 10));
 
   // display.setTextSize(1);
   // display.println("Steam");
@@ -156,8 +191,8 @@ void printScreenSave() {
   display.clearDisplay();
 
   if (millis() % 5000UL < 50) {
-    control_screen_save_pos_X = random(64 - 32);
-    control_screen_save_pos_Y = random(128 - 32);
+    control_screen_save_pos_X = random(128 - 32);
+    control_screen_save_pos_Y = random(64 - 32);
     control_screen_save_image = random(5);
   }
 
